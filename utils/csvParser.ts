@@ -1,68 +1,78 @@
 import { PropertyData } from '../types';
 
-export const parseCSV = (content: string): PropertyData[] => {
-  const lines = content.split('\n').filter(line => line.trim() !== '');
-  const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-  
+const generateId = () => Math.random().toString(36).substr(2, 9);
+
+export const parseCSV = (csvText: string): PropertyData[] => {
+  const lines = csvText.trim().split('\n');
+  if (lines.length < 2) return [];
+
+  // Extract Headers (Remove quotes and whitespace)
+  const headers = lines[0].split(',').map(h => h.replace(/['"]+/g, '').trim());
+
   const data: PropertyData[] = [];
 
   for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(',').map(v => v.trim());
-    if (values.length < headers.length) continue;
-
+    // Handle CSV lines that might have commas inside quotes (e.g. "$120,000")
+    // Regex: Match quoted strings OR unquoted values
+    const matches = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+    
+    if (!matches) continue;
+    
+    // Map matches to header indices
     const row: any = {};
-    headers.forEach((header, index) => {
-      row[header] = values[index];
+    matches.forEach((val, idx) => {
+        if (headers[idx]) {
+            // Remove wrapping quotes if present
+            row[headers[idx]] = val.replace(/^"|"$/g, '').trim();
+        }
     });
 
-    // Map CSV columns to PropertyData interface with fallbacks
-    const price = parseFloat(row.price) || 0;
-    const sqft = parseFloat(row.sqft) || 0;
-    
+    // --- PARSING LOGIC ---
+    // Handle variations in your Python scraper output
+    const address = row['Address'] || row['address'] || 'Unknown Sector';
+    const rawPrice = row['Price'] || row['price'] || '$0';
+    const status = row['Distress_Signals'] || row['Status'] || row['status'] || 'Standard';
+    const url = row['URL'] || row['url'] || '#';
+    const zip = address.match(/\d{5}/)?.[0] || '00000';
+
+    // Numeric conversion (Strip $ and , and K)
+    let priceNum = 0;
+    try {
+        let clean = rawPrice.replace(/[$,]/g, '').toUpperCase();
+        if (clean.includes('K')) {
+            clean = clean.replace('K', '');
+            priceNum = parseFloat(clean) * 1000;
+        } else {
+            priceNum = parseFloat(clean);
+        }
+    } catch (e) {
+        priceNum = 0;
+    }
+
     data.push({
-      id: `prop-${i}-${Date.now()}`,
-      address: row.address || 'Unknown Address',
-      zip: row.zip || '00000',
-      price: price,
-      sqft: sqft,
-      status: (row.status?.toUpperCase() as any) || 'STANDARD',
-      priceCut: parseFloat(row.price_cut) || 0,
-      dateListed: row.date || new Date().toISOString().split('T')[0],
-      pricePerSqFt: sqft > 0 ? parseFloat((price / sqft).toFixed(2)) : 0
+      id: generateId(),
+      address,
+      price: isNaN(priceNum) ? 0 : priceNum,
+      priceStr: rawPrice, // Store the original string for display
+      status,
+      distressSignal: status,
+      url,
+      zip,
+      sqft: 0, // Scraper doesn't get this yet
+      pricePerSqFt: 0,
+      dateListed: new Date().toISOString()
     });
   }
 
   return data;
 };
 
+// --- DEMO DATA GENERATOR ---
+// Used when you click "Initialize Demo Protocol"
 export const generateDemoData = (): PropertyData[] => {
-  const zips = ['90210', '10001', '33139', '94103', '60611'];
-  const statuses = ['STANDARD', 'AUCTION', 'FORECLOSURE', 'STANDARD', 'STANDARD'];
-  const data: PropertyData[] = [];
-  
-  for (let i = 0; i < 50; i++) {
-    const zip = zips[Math.floor(Math.random() * zips.length)];
-    const sqft = Math.floor(Math.random() * 3000) + 800;
-    const price = sqft * (Math.floor(Math.random() * 500) + 200);
-    const status = statuses[Math.floor(Math.random() * statuses.length)] as any;
-    const isDistressed = status !== 'STANDARD';
-    const priceCut = isDistressed ? Math.floor(price * 0.15) : (Math.random() > 0.7 ? Math.floor(price * 0.05) : 0);
-    
-    // Generate a date within the last 6 months
-    const date = new Date();
-    date.setDate(date.getDate() - Math.floor(Math.random() * 180));
-
-    data.push({
-      id: `demo-${i}`,
-      address: `${Math.floor(Math.random() * 9999)} Cyber Ave`,
-      zip,
-      price,
-      sqft,
-      status,
-      priceCut,
-      dateListed: date.toISOString().split('T')[0],
-      pricePerSqFt: parseFloat((price / sqft).toFixed(2))
-    });
-  }
-  return data;
+    return [
+        { id: '1', address: '123 Cyber St, Neo-Baltimore', price: 15000, priceStr: '$15K', status: 'AUCTION', distressSignal: 'AUCTION', url: '#', zip: '21216', sqft: 1200, pricePerSqFt: 12.5, dateListed: '' },
+        { id: '2', address: '404 Void Lane, Sector 7', price: 45000, priceStr: '$45,000', status: 'FORECLOSURE', distressSignal: 'FORECLOSURE', url: '#', zip: '21217', sqft: 1000, pricePerSqFt: 45, dateListed: '' },
+        { id: '3', address: '888 Standard Blvd', price: 120000, priceStr: '$120k', status: 'Standard', distressSignal: 'Standard', url: '#', zip: '21215', sqft: 1500, pricePerSqFt: 80, dateListed: '' },
+    ];
 };

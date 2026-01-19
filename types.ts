@@ -1,28 +1,22 @@
 export interface PropertyData {
   id: string;
   address: string;
-  zip: string;
   price: number;
+  priceStr: string; // Keep raw string for display
+  status: string; // 'AUCTION', 'FORECLOSURE', 'PRICE CUT', 'STANDARD'
+  distressSignal: string;
+  url: string;
+  zip: string;
   sqft: number;
-  status: 'STANDARD' | 'AUCTION' | 'FORECLOSURE';
-  priceCut: number;
-  dateListed: string;
   pricePerSqFt: number;
-}
-
-export interface ChartDataPoint {
-  name: string;
-  value: number;
-  [key: string]: any;
+  dateListed: string;
 }
 
 export enum SortField {
   PRICE = 'price',
-  SQFT = 'sqft',
-  ZIP = 'zip',
   STATUS = 'status',
-  PRICECUT = 'priceCut',
-  DATE = 'dateListed'
+  ZIP = 'zip',
+  SQFT = 'sqft'
 }
 
 export enum SortDirection {

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Search, ArrowUpDown, AlertTriangle } from 'lucide-react';
-import { PropertyData, SortField, SortDirection } from '../types';
+import { Search, ArrowUpDown, ExternalLink, ShieldAlert } from 'lucide-react';
+import { PropertyData } from '../types';
 
 interface SniperTableProps {
   data: PropertyData[];
@@ -8,106 +8,80 @@ interface SniperTableProps {
 
 const SniperTable: React.FC<SniperTableProps> = ({ data }) => {
   const [search, setSearch] = useState('');
-  const [sortField, setSortField] = useState<SortField>(SortField.PRICE);
-  const [sortDirection, setSortDirection] = useState<SortDirection>(SortDirection.DESC);
+  const [onlyDistressed, setOnlyDistressed] = useState(false);
 
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === SortDirection.ASC ? SortDirection.DESC : SortDirection.ASC);
-    } else {
-      setSortField(field);
-      setSortDirection(SortDirection.DESC);
-    }
-  };
-
-  const filteredAndSortedData = useMemo(() => {
-    let result = data.filter(item => 
-      item.address.toLowerCase().includes(search.toLowerCase()) ||
-      item.zip.includes(search) ||
-      item.status.toLowerCase().includes(search.toLowerCase())
-    );
-
-    result.sort((a, b) => {
-      const aValue = a[sortField];
-      const bValue = b[sortField];
-      
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return sortDirection === SortDirection.ASC 
-          ? aValue.localeCompare(bValue) 
-          : bValue.localeCompare(aValue);
-      }
-      
-      return sortDirection === SortDirection.ASC 
-        ? (aValue as number) - (bValue as number) 
-        : (bValue as number) - (aValue as number);
+  const filteredData = useMemo(() => {
+    return data.filter(item => {
+      const matchesSearch = item.address.toLowerCase().includes(search.toLowerCase()) || item.zip.includes(search);
+      const matchesDistress = onlyDistressed ? item.status !== 'Standard' && item.status !== 'STANDARD' : true;
+      return matchesSearch && matchesDistress;
     });
-
-    return result;
-  }, [data, search, sortField, sortDirection]);
+  }, [data, search, onlyDistressed]);
 
   return (
-    <div className="w-full bg-[#0a0a0a] border border-gray-800 rounded-sm overflow-hidden flex flex-col h-[600px]">
-      <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-black/50 backdrop-blur">
-        <div className="flex items-center gap-2 text-[#00f3ff]">
-          <AlertTriangle size={18} />
-          <h2 className="text-lg font-bold tracking-widest">SNIPER_FEED</h2>
+    <div className="w-full bg-[#050505] border border-[#333] rounded-sm overflow-hidden flex flex-col h-[600px] shadow-2xl">
+      
+      {/* TOOLBAR */}
+      <div className="p-4 border-b border-[#333] flex justify-between items-center bg-black/50 backdrop-blur">
+        <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-[#E056FD]">
+                <ShieldAlert size={18} />
+                <h2 className="text-lg font-bold tracking-widest font-mono">DATA_FEED</h2>
+            </div>
+            
+            <button 
+                onClick={() => setOnlyDistressed(!onlyDistressed)}
+                className={`px-3 py-1 text-[10px] font-mono border uppercase transition-all ${onlyDistressed ? 'bg-[#FF003C] text-black border-[#FF003C] font-bold' : 'border-gray-700 text-gray-500 hover:border-[#FF003C]'}`}
+            >
+                {onlyDistressed ? 'SNIPER MODE: ON' : 'SNIPER MODE: OFF'}
+            </button>
         </div>
+
         <div className="relative">
           <input
             type="text"
             placeholder="SEARCH SECTOR..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="bg-black border border-gray-700 text-[#00f3ff] text-sm px-4 py-2 pl-10 focus:outline-none focus:border-[#00f3ff] w-64 placeholder-gray-700"
+            className="bg-black border border-gray-700 text-[#E056FD] text-sm px-4 py-2 pl-10 focus:outline-none focus:border-[#E056FD] w-64 placeholder-gray-800 font-mono"
           />
           <Search className="absolute left-3 top-2.5 text-gray-700" size={14} />
         </div>
       </div>
 
+      {/* TABLE */}
       <div className="overflow-auto flex-1 custom-scrollbar">
         <table className="w-full text-left border-collapse">
-          <thead className="bg-[#050505] sticky top-0 z-10 text-xs text-gray-500 uppercase tracking-wider">
+          <thead className="bg-[#080808] sticky top-0 z-10 text-xs text-gray-500 uppercase tracking-wider font-mono">
             <tr>
-              {[
-                { label: 'Address', field: SortField.ZIP }, // Simplified sorting for address col using zip/string
-                { label: 'Zip', field: SortField.ZIP },
-                { label: 'Price', field: SortField.PRICE },
-                { label: 'SqFt', field: SortField.SQFT },
-                { label: '$/SqFt', field: SortField.PRICE },
-                { label: 'Status', field: SortField.STATUS },
-                { label: 'Distress', field: SortField.PRICECUT },
-              ].map((col, idx) => (
-                <th 
-                  key={idx}
-                  className="px-6 py-4 border-b border-gray-800 cursor-pointer hover:text-[#00f3ff] transition-colors"
-                  onClick={() => handleSort(col.field)}
-                >
-                  <div className="flex items-center gap-2">
-                    {col.label}
-                    <ArrowUpDown size={12} className="opacity-50" />
-                  </div>
-                </th>
-              ))}
+              <th className="px-6 py-3 border-b border-[#222]">Address</th>
+              <th className="px-6 py-3 border-b border-[#222]">Price</th>
+              <th className="px-6 py-3 border-b border-[#222]">Status</th>
+              <th className="px-6 py-3 border-b border-[#222]">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-900 text-sm font-mono">
-            {filteredAndSortedData.map((row) => {
-              const isDistressed = row.status === 'AUCTION' || row.status === 'FORECLOSURE' || row.priceCut > 0;
-              const glowClass = isDistressed ? 'text-[#ff003c] drop-shadow-[0_0_8px_rgba(255,0,60,0.4)]' : 'text-gray-400';
-              const bgClass = isDistressed ? 'bg-[#ff003c]/5' : '';
+          <tbody className="divide-y divide-[#1a1a1a] text-sm font-mono">
+            {filteredData.map((row) => {
+              const isDistressed = row.status !== 'Standard' && row.status !== 'STANDARD';
+              const rowClass = isDistressed ? 'bg-[#FF003C]/5 hover:bg-[#FF003C]/10' : 'hover:bg-white/5';
+              const textClass = isDistressed ? 'text-[#FF003C] font-bold' : 'text-gray-400';
 
               return (
-                <tr key={row.id} className={`hover:bg-white/5 transition-colors ${bgClass}`}>
-                  <td className={`px-6 py-4 ${isDistressed ? 'text-[#ff003c]' : 'text-gray-300'}`}>{row.address}</td>
-                  <td className="px-6 py-4 text-gray-500">{row.zip}</td>
-                  <td className="px-6 py-4 font-bold">${row.price.toLocaleString()}</td>
-                  <td className="px-6 py-4 text-gray-500">{row.sqft.toLocaleString()}</td>
-                  <td className="px-6 py-4 text-gray-500">${row.pricePerSqFt}</td>
-                  <td className={`px-6 py-4 font-bold tracking-wider ${glowClass}`}>
+                <tr key={row.id} className={`transition-colors ${rowClass}`}>
+                  <td className="px-6 py-3 text-gray-300 truncate max-w-xs">{row.address}</td>
+                  <td className="px-6 py-3 font-bold text-white">{row.priceStr}</td>
+                  <td className={`px-6 py-3 tracking-wider ${textClass}`}>
                     {row.status}
                   </td>
-                  <td className={`px-6 py-4 ${row.priceCut > 0 ? 'text-[#ff003c]' : 'text-gray-600'}`}>
-                    {row.priceCut > 0 ? `-$${row.priceCut.toLocaleString()}` : '0'}
+                  <td className="px-6 py-3">
+                    <a 
+                        href={row.url} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="flex items-center gap-2 text-[#E056FD] hover:text-white text-xs uppercase hover:underline"
+                    >
+                        Intel <ExternalLink size={10} />
+                    </a>
                   </td>
                 </tr>
               );
@@ -115,8 +89,8 @@ const SniperTable: React.FC<SniperTableProps> = ({ data }) => {
           </tbody>
         </table>
         
-        {filteredAndSortedData.length === 0 && (
-          <div className="p-12 text-center text-gray-600">
+        {filteredData.length === 0 && (
+          <div className="p-12 text-center text-gray-700 font-mono text-sm">
             NO SIGNALS DETECTED IN CURRENT SECTOR
           </div>
         )}
