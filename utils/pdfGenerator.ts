@@ -1,69 +1,81 @@
-import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+/**
+ * VOID_WEAVER // PDF_PROTOCOL_V3
+ * REPAIR: VITE_PRODUCTION_BUNDLING_FIX
+ */
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { PropertyData } from '../types';
 
-// Define interface for jsPDF with autoTable plugin
-interface JsPDFWithAutoTable extends jsPDF {
-  autoTable: (options: any) => JsPDFWithAutoTable;
-}
-
 export const generatePDFReport = (data: PropertyData[]) => {
-  const doc = new jsPDF() as unknown as JsPDFWithAutoTable;
-  
-  // Cyberpunk Header
-  doc.setFillColor(5, 5, 5);
-  doc.rect(0, 0, 210, 297, 'F');
-  
-  doc.setTextColor(0, 243, 255); // Cyan
-  doc.setFont("courier", "bold");
-  doc.setFontSize(22);
-  doc.text("LEADVISION PRO // REPORT", 14, 20);
-  
-  doc.setFontSize(10);
-  doc.setTextColor(200, 200, 200);
-  doc.text(`GENERATED: ${new Date().toISOString()}`, 14, 28);
-  doc.text(`TOTAL RECORDS: ${data.length}`, 14, 33);
+  if (!data || data.length === 0) return;
 
-  // Stats
-  const totalValue = data.reduce((acc, curr) => acc + curr.price, 0);
-  const avgPrice = totalValue / data.length;
-  const distressedCount = data.filter(d => d.status === 'AUCTION' || d.status === 'FORECLOSURE').length;
-  
-  doc.setTextColor(255, 0, 60); // Red
-  doc.text(`DISTRESSED PROPERTIES: ${distressedCount}`, 14, 45);
-  doc.setTextColor(0, 243, 255);
-  doc.text(`MARKET VOLUME: $${(totalValue / 1000000).toFixed(2)}M`, 14, 50);
+  try {
+    const doc = new jsPDF();
+    const timestamp = new Date().toISOString().split('T')[0];
 
-  // Table
-  const tableData = data.map(row => [
-    row.address,
-    row.zip,
-    `$${row.price.toLocaleString()}`,
-    row.status,
-    row.priceCut > 0 ? `-$${row.priceCut.toLocaleString()}` : '-'
-  ]);
+    // 1. VOID BRANDING
+    doc.setFillColor(0, 0, 0);
+    doc.rect(0, 0, 210, 297, 'F');
 
-  doc.autoTable({
-    startY: 60,
-    head: [['Address', 'Zip', 'Price', 'Status', 'Cut']],
-    body: tableData,
-    theme: 'grid',
-    headStyles: { 
-      fillColor: [0, 0, 0], 
-      textColor: [0, 243, 255],
-      lineWidth: 0.1,
-      lineColor: [0, 243, 255]
-    },
-    bodyStyles: { 
-      fillColor: [10, 10, 10], 
-      textColor: [220, 220, 220],
-      font: 'courier'
-    },
-    alternateRowStyles: {
-      fillColor: [5, 5, 5]
-    },
-    margin: { top: 60 }
-  });
+    doc.setFontSize(22);
+    doc.setTextColor(224, 86, 253); // Red-Violet
+    doc.text('LEADVISION // MARKET REPORT', 14, 22);
 
-  doc.save('leadvision_intel.pdf');
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`SECTOR: CLEVELAND/BALTIMORE // DATE: ${timestamp}`, 14, 32);
+
+    // 2. DATA PROCESSING
+    const tableRows = data.map(item => [
+      (item.address || 'UNKNOWN_NODE').substring(0, 30),
+      item.priceStr || 'N/A',
+      (item.status || 'STANDARD').toUpperCase(),
+      item.zip || '00000'
+    ]);
+
+    // 3. EXPLICIT AUTOTABLE INVOCATION
+    autoTable(doc, {
+      startY: 45,
+      head: [['ADDRESS', 'PRICE', 'SIGNAL', 'ZIP']],
+      body: tableRows,
+      theme: 'grid',
+      styles: {
+        fillColor: [10, 10, 10],
+        textColor: [200, 200, 200],
+        fontSize: 8,
+        font: 'courier',
+        lineColor: [40, 40, 40],
+        lineWidth: 0.1,
+      },
+      headStyles: {
+        fillColor: [30, 30, 30],
+        textColor: [224, 86, 253],
+        fontStyle: 'bold',
+      },
+      didParseCell: (dataCell) => {
+        if (dataCell.section === 'body' && dataCell.column.index === 2) {
+          const val = String(dataCell.cell.raw);
+          if (val !== 'STANDARD') {
+            dataCell.cell.styles.textColor = [255, 0, 60]; // Cyber-Red
+          }
+        }
+      }
+    });
+
+    // 4. SIGNATURE
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(80, 80, 80);
+      doc.text('ARCHITECT // VOID_WEAVER // ENCRYPTED_REPORT', 14, 285);
+    }
+
+    doc.save(`LEADVISION_INTEL_${timestamp}.pdf`);
+    console.log("--> EXPORT_COMPLETE");
+
+  } catch (error) {
+    console.error("--> EXPORT_FAILED:", error);
+    alert("CRITICAL ERROR: PDF engine failed. Check console logs.");
+  }
 };
