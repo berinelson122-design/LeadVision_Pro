@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+/**
+ * VOID_WEAVER // LEADVISION_PRO_STYLE_v2.0
+ * ARCHITECT: NELSON BERI
+ * HARDWARE: APPLE_M2_SILICON_OPTIMIZED
+ */
+
+@theme {
+  --color-cyber-red: #FF003C;
+  --color-neon-violet: #E056FD;
+  --color-data-cyan: #00f3ff;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+:root {
+  background-color: #000000;
+  color: #E5E5E5;
+  cursor: crosshair;
+}
+
+@layer base {
+  body {
+    @apply m-0 overflow-hidden bg-black font-mono;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* BRUTALIST SCANLINES: Mandatory for Information Sovereignty */
+.scanlines::after {
+  content: " ";
+  display: block;
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1000;
+  background: linear-gradient(
+    rgba(18, 18, 18, 0) 50%,
+    rgba(0, 0, 0, 0.25) 50%
+  );
+  background-size: 100% 4px;
+}
+
+/* DATA_FEED SCROLLBAR: Optimized for 1,000+ Lead Rows */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #050505;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 2px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #E056FD;
+}
+
+/* UI GLOW EFFECTS */
+.neon-border-violet {
+  box-shadow: 0 0 15px rgba(224, 86, 253, 0.2), inset 0 0 10px rgba(224, 86, 253, 0.1);
+}
+
+.neon-text-red {
+  text-shadow: 0 0 10px #FF003C;
+}
+
+/* SELECTION OVERRIDE */
+::selection {
+  background: #00f3ff;
+  color: #000000;
+}

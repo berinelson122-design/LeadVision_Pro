@@ -22,8 +22,8 @@ const App: React.FC = () => {
         </div>
         <div className="flex items-center gap-4 text-xs font-mono text-gray-600">
           <div className="flex items-center gap-2">
-             <div className="w-2 h-2 bg-[#00f3ff] rounded-full animate-pulse"></div>
-             SYSTEM ONLINE
+            <div className="w-2 h-2 bg-[#00f3ff] rounded-full animate-pulse"></div>
+            SYSTEM ONLINE
           </div>
         </div>
       </header>
@@ -40,7 +40,7 @@ const App: React.FC = () => {
           </div>
         ) : (
           <div className="animate-fade-in">
-            
+
             {/* Control Bar */}
             <div className="flex justify-between items-center mb-8">
               <div className="flex items-center gap-4">
@@ -51,16 +51,16 @@ const App: React.FC = () => {
                   ALERTS: {data.filter(d => d.status !== 'STANDARD' || d.priceCut > 0).length}
                 </div>
               </div>
-              
+
               <div className="flex gap-4">
-                 <button 
+                <button
                   onClick={() => setData([])}
                   className="flex items-center gap-2 px-6 py-2 border border-gray-800 hover:border-gray-600 text-gray-400 text-xs tracking-wider transition-colors"
                 >
                   <Terminal size={14} />
                   RESET
                 </button>
-                <button 
+                <button
                   onClick={() => generatePDFReport(data)}
                   className="flex items-center gap-2 px-6 py-2 bg-[#00f3ff] text-black font-bold text-xs tracking-wider hover:bg-[#00f3ff]/80 transition-all shadow-[0_0_15px_rgba(0,243,255,0.4)]"
                 >
