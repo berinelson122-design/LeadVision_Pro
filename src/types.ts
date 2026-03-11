@@ -1,6 +1,4 @@
-/**
- * VOID_WEAVER // LEADVISION_TYPES
- */
+
 export interface PropertyData {
   id: string;
   address: string;

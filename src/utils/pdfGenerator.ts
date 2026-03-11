@@ -1,7 +1,4 @@
-/**
- * VOID_WEAVER // PDF_PROTOCOL_V3
- * REPAIR: VITE_PRODUCTION_BUNDLING_FIX
- */
+
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { PropertyData } from '../types';
